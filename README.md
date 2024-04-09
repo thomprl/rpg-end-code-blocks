@@ -1,20 +1,38 @@
-# rpg-complete-code-block README
+# rpg-end-code-blocks README
 
-This is the README for your extension "rpg-complete-code-block". After writing up a brief description, we recommend including the following sections.
+rpg-end-code-blocks - This entension will auto add ending code blocks once you type enter for RPGLE program.  
+For example if you type If x=y; and press enter it will automatically add the matching EndIf; to the code and 
+move the cursor to the second line indented based on VSCodes indentions. There are default code blocks setup.
 
+You can add the following to your settings.json file and customize them as you see fit
+```
+    "rpg-end-code-blocks.openings": [
+        { "open": "^\\s*IF\\s+\\b", "close": "EndIf" },
+        { "open": "^\\s*DCL-DS\\s+\\b", "close": "End-Ds" },
+        { "open": "^\\s*DCL-PR\\s+\\b", "close": "End-Pr" },
+        { "open": "^\\s*DCL-PROC\\s+\\b", "close": "End-Proc" },
+        { "open": "^\\s*DCL-PI\\s+\\b", "close": "End-Pi" },
+        { "open": "^\\s*BEGSR\\s+\\b", "close": "EndSr" },
+        { "open": "^\\s*DOW\\s+\\b", "close": "EndDo" },
+        { "open": "^\\s*DOU\\s+\\b", "close": "EndDo" },
+        { "open": "^\\s*FOR\\s+\\b", "close": "EndFor" },
+        { "open": "^\\s*MONITOR\\b", "close": "EndMon" },
+        { "open": "^\\s*FOR-EACH\\b", "close": "EndFor" }
+    ]
+```
 ## Features
 
 Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
 
 For example if there is an image subfolder under your extension project workspace:
 
-\!\[feature X\]\(images/feature-x.png\)
+\!\[feature X\]\(images/rpg-end-code-blocks.gif\)
 
 > Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+This will only work with ILE RPGLE Free Form 
 
 ## Extension Settings
 

@@ -1,8 +1,11 @@
 {
   "name": "rpg-end-code-blocks",
-  "displayName": "rpg end code blocks",
+  "displayName": "RPG End Code Blocks",
   "description": "Auto add end code blocks on enter",
+  "icon": "images/begend.png",
   "version": "0.0.1",
+  "publisher": "Ricky Thompson",
+  "repository": "https://github.com/thomprl/rpg-end-code-blocks",
   "engines": {
     "vscode": "^1.87.0"
   },
@@ -26,13 +29,13 @@
         "command": "endwise.cmdEnter",
         "key": "ctrl+enter",
         "mac": "cmd+enter",
-        "title": "End Code Blocks",
+        "title": "RPG End Code Blocks",
         "when": "editorTextFocus && editorLangId =~ /^rpgle$|^sqlrpgle$/ && vim.mode != 'Normal' && vim.mode != 'SearchInProgressMode' && vim.mode != 'CommandlineInProgress^' "
       },
       {
         "command": "endwise.checkForAcceptSelectedSuggestion",
         "key": "enter",
-        "title": "End Code Blocks",
+        "title": "RPG End Code Blocks",
         "when": "editorTextFocus && editorLangId =~ /^rpg$|^sqlrpgle$/ && suggestWidgetVisible && suggestionMakesTextEdit"
       }
     ]
