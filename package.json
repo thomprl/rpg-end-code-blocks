@@ -1,0 +1,59 @@
+{
+  "name": "rpg-end-code-blocks",
+  "displayName": "rpg end code blocks",
+  "description": "Auto add end code blocks on enter",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.87.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onLanguage:rpgle",
+    "onLanguage:sqlrpgle"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "keybindings": [
+      {
+        "command": "rpg-end-code-blocks.enter",
+        "key": "enter",
+        "title": "End Code Blocks",
+        "when": "editorTextFocus && editorLangId =~ /^rpgle$|^sqlrpgle$/ && vim.mode != 'Normal' && vim.mode != 'SearchInProgressMode' && vim.mode != 'CommandlineInProgress' "
+      },
+      {
+        "command": "endwise.cmdEnter",
+        "key": "ctrl+enter",
+        "mac": "cmd+enter",
+        "title": "End Code Blocks",
+        "when": "editorTextFocus && editorLangId =~ /^rpgle$|^sqlrpgle$/ && vim.mode != 'Normal' && vim.mode != 'SearchInProgressMode' && vim.mode != 'CommandlineInProgress^' "
+      },
+      {
+        "command": "endwise.checkForAcceptSelectedSuggestion",
+        "key": "enter",
+        "title": "End Code Blocks",
+        "when": "editorTextFocus && editorLangId =~ /^rpg$|^sqlrpgle$/ && suggestWidgetVisible && suggestionMakesTextEdit"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.87.0",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "18.x",
+    "@typescript-eslint/eslint-plugin": "^7.0.2",
+    "@typescript-eslint/parser": "^7.0.2",
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.3",
+    "@vscode/test-cli": "^0.0.6",
+    "@vscode/test-electron": "^2.3.9"
+  }
+}
