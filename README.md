@@ -1,12 +1,14 @@
 # rpg-end-code-blocks README
 
-rpg-end-code-blocks - This entension will auto add ending code blocks once you type enter for RPGLE program.  
+RPG End Code Blocks - This extension will auto add ending code blocks once you press enter for a RPGLE program.  
+
 For example if you type If x=y; and press enter it will automatically add the matching EndIf; to the code and 
-move the cursor to the second line indented based on VSCodes indentions. There are default code blocks setup.
+move the cursor to the second line indented based on VSCodes indentions. 
 
 ## Features
 
-You can add the following to your settings.json file and customize them as you see fit
+There are default code blocks setup but if you wish to customize them you can added this to the settings.json file and customize them as you see fit.
+
 ```
     "rpg-end-code-blocks.openings": [
         { open: /^\s*BEGSR\s+/i, close: 'EndSr' },
