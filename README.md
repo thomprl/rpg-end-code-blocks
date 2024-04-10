@@ -1,5 +1,6 @@
 # rpg-end-code-blocks
 ![RPG End Code Blocks](https://github.com/thomprl/rpg-end-code-blocks/blob/release/images/begend.png?raw=true)
+
 RPG End Code Blocks - This extension will auto add ending code blocks once you press enter for a RPGLE program.  
 
 For example if you type If x=y; and press enter it will automatically add the matching EndIf; to the code and 
