@@ -1,4 +1,5 @@
-# rpg-end-code-blocks README
+# rpg-end-code-blocks
+![RPG End Code Blocks](https://github.com/thomprl/rpg-end-code-blocks/blob/release/images/begend.png?raw=true)
 
 RPG End Code Blocks - This extension will auto add ending code blocks once you press enter for a RPGLE program.  
 
