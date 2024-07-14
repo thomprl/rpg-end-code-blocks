@@ -1,62 +1,76 @@
 {
-  "name": "rpg-end-code-blocks",
-  "displayName": "RPG End Code Blocks",
-  "description": "Auto add end code blocks on enter",
-  "icon": "images/begend.png",
-  "version": "1.0.0",
-  "publisher": "Ricky Thompson",
-  "repository": "https://github.com/thomprl/rpg-end-code-blocks",
-  "engines": {
-    "vscode": "^1.87.0"
-  },
-  "categories": [
-    "Other"
-  ],
-  "activationEvents": [
-    "onLanguage:rpgle",
-    "onLanguage:sqlrpgle"
-  ],
-  "main": "./out/extension.js",
-  "contributes": {
-    "keybindings": [
-      {
-        "command": "rpg-end-code-blocks.enter",
-        "key": "enter",
-        "title": "End Code Blocks",
-        "when": "editorTextFocus && editorLangId =~ /^rpgle$|^sqlrpgle$/ && vim.mode != 'Normal' && vim.mode != 'SearchInProgressMode' && vim.mode != 'CommandlineInProgress' "
-      },
-      {
-        "command": "endwise.cmdEnter",
-        "key": "ctrl+enter",
-        "mac": "cmd+enter",
-        "title": "RPG End Code Blocks",
-        "when": "editorTextFocus && editorLangId =~ /^rpgle$|^sqlrpgle$/ && vim.mode != 'Normal' && vim.mode != 'SearchInProgressMode' && vim.mode != 'CommandlineInProgress^' "
-      },
-      {
-        "command": "endwise.checkForAcceptSelectedSuggestion",
-        "key": "enter",
-        "title": "RPG End Code Blocks",
-        "when": "editorTextFocus && editorLangId =~ /^rpg$|^sqlrpgle$/ && suggestWidgetVisible && suggestionMakesTextEdit"
-      }
-    ]
-  },
-  "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile && npm run lint",
-    "lint": "eslint src --ext ts",
-    "test": "vscode-test"
-  },
-  "devDependencies": {
-    "@types/vscode": "^1.87.0",
-    "@types/mocha": "^10.0.6",
-    "@types/node": "18.x",
-    "@typescript-eslint/eslint-plugin": "^7.0.2",
-    "@typescript-eslint/parser": "^7.0.2",
-    "eslint": "^8.56.0",
-    "typescript": "^5.3.3",
-    "@vscode/test-cli": "^0.0.6",
-    "@vscode/test-electron": "^2.3.9"
-  }
+	"name": "rpg-end-code-blocks",
+	"displayName": "RPG End Code Blocks",
+	"description": "Auto add end code blocks on enter",
+	"icon": "images/begend.png",
+	"version": "1.0.0",
+	"publisher": "RickyThompson",
+	"repository": "https://github.com/thomprl/rpg-end-code-blocks",
+	"engines": {
+		"vscode": "^1.87.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"activationEvents": [
+		"onLanguage:rpgle",
+		"onLanguage:sqlrpgle"
+	],
+	"main": "./out/extension.js",
+	"contributes": {
+		"keybindings": [
+			{
+				"command": "rpg-end-code-blocks.enter",
+				"key": "enter",
+				"title": "End Code Blocks",
+				"when": "editorTextFocus && editorLangId =~ /^rpgle$|^sqlrpgle$/ && vim.mode != 'Normal' && vim.mode != 'SearchInProgressMode' && vim.mode != 'CommandlineInProgress' "
+			},
+			{
+				"command": "endwise.cmdEnter",
+				"key": "ctrl+enter",
+				"mac": "cmd+enter",
+				"title": "RPG End Code Blocks",
+				"when": "editorTextFocus && editorLangId =~ /^rpgle$|^sqlrpgle$/ && vim.mode != 'Normal' && vim.mode != 'SearchInProgressMode' && vim.mode != 'CommandlineInProgress^' "
+			},
+			{
+				"command": "endwise.checkForAcceptSelectedSuggestion",
+				"key": "enter",
+				"title": "RPG End Code Blocks",
+				"when": "editorTextFocus && editorLangId =~ /^rpg$|^sqlrpgle$/ && suggestWidgetVisible && suggestionMakesTextEdit"
+			}
+		]
+	},
+	"scripts": {
+		"vscode:prepublish": "npm run compile",
+		"compile": "tsc -p ./",
+		"watch": "tsc -watch -p ./",
+		"pretest": "npm run compile && npm run lint",
+		"lint": "eslint src --ext ts",
+		"test": "vscode-test"
+	},
+	"devDependencies": {
+		"@types/vscode": "^1.87.0",
+		"@types/mocha": "^10.0.6",
+		"@types/node": "18.x",
+		"@typescript-eslint/eslint-plugin": "^7.0.2",
+		"@typescript-eslint/parser": "^7.0.2",
+		"eslint": "^8.56.0",
+		"typescript": "^5.3.3",
+		"@vscode/test-cli": "^0.0.6",
+		"@vscode/test-electron": "^2.3.9"
+	},
+	"__metadata": {
+		"id": "2783423b-c7d9-4e98-bda3-ee04da833a14",
+		"publisherId": "624c3dd5-b65b-41f3-b1f0-d67a4b69abb4",
+		"publisherDisplayName": "Ricky Thompson",
+		"targetPlatform": "undefined",
+		"isApplicationScoped": false,
+		"updated": true,
+		"isPreReleaseVersion": false,
+		"hasPreReleaseVersion": false,
+		"installedTimestamp": 1714441610539,
+		"pinned": false,
+		"preRelease": false,
+		"source": "gallery"
+	}
 }
