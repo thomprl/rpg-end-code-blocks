@@ -4,19 +4,19 @@ import * as vscode from "vscode";
 // All openings are check for a space after before adding the cooresponding end except MONITOR and SELECT
 // Define a default value for OPENINGS_RPG
 const DEFAULT_OPENINGS_RPG = [
-    { "open": "^\\s*BEGSR\\s+", "close": "EndSr" },
-    { "open": "^\\s*DCL-DS\\s+", "close": "End-Ds" },
-    { "open": "^\\s*DCL-ENUM\\s+", "close": "End-Enum" },        
-    { "open": "^\\s*DCL-PR\\s+", "close": "End-Pr" },
-    { "open": "^\\s*DCL-PI\\s+", "close": "End-Pi" },
-    { "open": "^\\s*DCL-PROC\\s+", "close": "End-Proc" },
-    { "open": "^\\s*DOW\\s+", "close": "EndDo" },
-    { "open": "^\\s*DOU\\s+", "close": "EndDo" },
-    { "open": "^\\s*FOR\\s+", "close": "EndFor" },
-    { "open": "^\\s*FOR-EACH\\s+", "close": "EndFor" },
-    { "open": "^\\s*IF\\s+", "close": "EndIf" },
-    { "open": "^\\s*MONITOR;", "close": "EndMon" },
-    { "open": "^\\s*SELECT;", "close": "EndSl" }
+    { "open": "^\\s*BEGSR\\b", "close": "EndSr" },
+    { "open": "^\\s*DCL-DS\\b", "close": "End-Ds" },
+    { "open": "^\\s*DCL-ENUM\\b", "close": "End-Enum" },        
+    { "open": "^\\s*DCL-PR\\b", "close": "End-Pr" },
+    { "open": "^\\s*DCL-PI\\b", "close": "End-Pi" },
+    { "open": "^\\s*DCL-PROC\\b", "close": "End-Proc" },
+    { "open": "^\\s*DOW\\b", "close": "EndDo" },
+    { "open": "^\\s*DOU\\b", "close": "EndDo" },
+    { "open": "^\\s*FOR\\b", "close": "EndFor" },
+    { "open": "^\\s*FOR-EACH\\b", "close": "EndFor" },
+    { "open": "^\\s*IF\\b", "close": "EndIf" },
+    { "open": "^\\s*MONITOR\\s*;", "close": "EndMon" },
+    { "open": "^\\s*SELECT\\s*;", "close": "EndSl" }
 ];
 
 // Retrieve user-defined OPENINGS_RPG from settings or use the default value
@@ -89,12 +89,31 @@ async function linebreak() {
 }
 
 function shouldAddEnd(matchedOpening, editor, lineNumber, columnNumber) {
-    const lineText = editor.document.lineAt(lineNumber).text;
+    const document = editor.document;
+    const lineText = document.lineAt(lineNumber).text;
 
-    // Conditions to not close the block
-    if (lineText.length > columnNumber) {return false;} // Cursor not at end of line
+    // 1. Ensure the cursor is at the end of the line
+    if (lineText.length > columnNumber) {
+        return false;
+    }
 
-    // Implement more sophisticated checks here if needed, such as checking for existing matching closing tags
+    const closingTag = matchedOpening.close.toUpperCase();
+
+    // Get indentation of the current line
+    const currentIndent = lineText.match(/^(\s*)/)?.[1] ?? '';
+
+    // 2. Look ahead up to 20 lines to check if the closing tag already exists at same indent level
+    const maxLines = Math.min(document.lineCount, lineNumber + 20);
+    for (let i = lineNumber + 1; i < maxLines; i++) {
+        const nextLineText = document.lineAt(i).text;
+        const nextIndent = nextLineText.match(/^(\s*)/)?.[1] ?? '';
+        const trimmedUpper = nextLineText.trim().toUpperCase();
+
+        if ((trimmedUpper === `${closingTag};` || trimmedUpper.startsWith(`${closingTag} `)) &&
+            currentIndent === nextIndent) {
+            return false; // Found matching close at same indent
+        }
+    }
 
     return true;
 }
@@ -102,4 +121,15 @@ function shouldAddEnd(matchedOpening, editor, lineNumber, columnNumber) {
 function indentationFor(lineText) {
     const match = lineText.match(/^(\s*)/);
     return match ? match[1] : '';
+}
+
+function hasClosingTag(editor, fromLine, expectedClose) {
+    const totalLines = editor.document.lineCount;
+    for (let i = fromLine + 1; i < Math.min(fromLine + 100, totalLines); i++) {
+        const text = editor.document.lineAt(i).text;
+        if (text.trim().toUpperCase().startsWith(expectedClose.toUpperCase())) {
+            return true;
+        }
+    }
+    return false;
 }
