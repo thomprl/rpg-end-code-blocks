@@ -1,6 +1,11 @@
 # Change Log
 
 All notable changes to the "rpg-end-code-blocks" extension will be documented in this file.
+## [1.0.4]
+- Fixed a issue if it saw another If/EndIf block before the 20 lines it was not adding the end block.  Made a 
+change that should detect if a begin block happens prior to the 20 lines with the same block type if should add 
+a new end block. Again this isn't perfect and relies on the code to be formmatted correctly.
+
 ## [1.0.3]
 - Fixed a small issue that could happen in fixed format RPG code. This extension should only work for **free format code 
 

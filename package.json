@@ -3,7 +3,7 @@
 	"displayName": "RPG End Code Blocks",
 	"description": "Auto add end code blocks on enter",
 	"icon": "images/begend.png",
-	"version": "1.0.3",
+	"version": "1.0.4",
 	"publisher": "RickyThompson",
 	"repository": "https://github.com/thomprl/rpg-end-code-blocks",
 	"engines": {

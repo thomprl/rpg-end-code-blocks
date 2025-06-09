@@ -98,20 +98,26 @@ function shouldAddEnd(matchedOpening, editor, lineNumber, columnNumber) {
     }
 
     const closingTag = matchedOpening.close.toUpperCase();
-
-    // Get indentation of the current line
+    const openingPattern = matchedOpening.open;
     const currentIndent = lineText.match(/^(\s*)/)?.[1] ?? '';
 
-    // 2. Look ahead up to 20 lines to check if the closing tag already exists at same indent level
     const maxLines = Math.min(document.lineCount, lineNumber + 20);
-    for (let i = lineNumber + 1; i < maxLines; i++) {
-        const nextLineText = document.lineAt(i).text;
-        const nextIndent = nextLineText.match(/^(\s*)/)?.[1] ?? '';
-        const trimmedUpper = nextLineText.trim().toUpperCase();
 
+    for (let i = lineNumber + 1; i < maxLines; i++) {
+        const nextLine = document.lineAt(i).text;
+        
+        const nextIndent = nextLine.match(/^(\s*)/)?.[1] ?? '';
+        const trimmedUpper = nextLine.trim().toUpperCase();
+
+        // Case 1: Found closing tag at same indent – cancel
         if ((trimmedUpper === `${closingTag};` || trimmedUpper.startsWith(`${closingTag} `)) &&
-            currentIndent === nextIndent) {
-            return false; // Found matching close at same indent
+            nextIndent === currentIndent) {
+            return false;
+        }
+
+        // Case 2: Found same opening tag at same indent – allow insertion
+        if (openingPattern.test(nextLine) && nextIndent === currentIndent) {
+            break; // Allow adding, since a new opening started
         }
     }
 
