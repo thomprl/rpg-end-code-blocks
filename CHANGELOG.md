@@ -1,6 +1,9 @@
 # Change Log
 
 All notable changes to the "rpg-end-code-blocks" extension will be documented in this file.
+## [1.0.6]
+- Forgot to update the CHANGELOG.MD file.  Bumping to version 1.0.6.
+
 ## [1.0.5]
 - Fixed issue with end block being on the same line.
 - Also make sure cursor is past the ; before adding a new line.
