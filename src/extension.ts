@@ -55,7 +55,7 @@ async function rpgEndCodeBlocksEnter(calledWithModifier = false) {
         await linebreak(); // Default behavior for non-RPG files
         return;
     }
-
+    
     let matchedOpening = OPENINGS_RPG.find(({ open }) => open.test(lineText));
     if (matchedOpening && shouldAddEnd(matchedOpening, editor, lineNumber, columnNumber)) {
         await linebreakWithClosing(matchedOpening.close, lineText);
@@ -67,6 +67,16 @@ async function rpgEndCodeBlocksEnter(calledWithModifier = false) {
 async function linebreakWithClosing(closingTag, lineText) {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {return;}
+
+    // Ensure the cursor is at the end of the current line so insertion happens
+    // in the intended location even if the cursor was elsewhere on the line.
+    try {
+        const currentLine = editor.selection.active.line;
+        const lineEnd = editor.document.lineAt(currentLine).range.end;
+        editor.selection = new vscode.Selection(lineEnd, lineEnd);
+    } catch (e) {
+        // If anything goes wrong, fall back to default behavior (do nothing).
+    }
 
     await editor.edit((textEditor) => {
         const indent = indentationFor(lineText);
@@ -92,8 +102,16 @@ function shouldAddEnd(matchedOpening, editor, lineNumber, columnNumber) {
     const document = editor.document;
     const lineText = document.lineAt(lineNumber).text;
 
-    // 1. Ensure the cursor is at the end of the line
-    if (lineText.length > columnNumber) {
+    // 1. Ensure the cursor is after the line's semicolon.
+    // We only add end-blocks when the user has the cursor placed after the ';' (e.g., DCL-DS myds;|)
+    // If there's no semicolon on the line, do not add the end-block.
+    const semicolonPos = lineText.lastIndexOf(';');
+    if (semicolonPos === -1) {
+        return false;
+    }
+    // Require the cursor column to be strictly greater than the semicolon's index
+    // (so the cursor is positioned after the semicolon).
+    if (columnNumber <= semicolonPos) {
         return false;
     }
 
@@ -102,6 +120,22 @@ function shouldAddEnd(matchedOpening, editor, lineNumber, columnNumber) {
     const currentIndent = lineText.match(/^(\s*)/)?.[1] ?? '';
 
     const maxLines = Math.min(document.lineCount, lineNumber + 20);
+
+    // New check: if the same line already contains the corresponding closing tag,
+    // do not add an end block. This handles cases like "IF ... EndIf;" on one line.
+    try {
+        const escapedClose = matchedOpening.close.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const sameLineCloseRegex = new RegExp(`${escapedClose}(\\s*;|\\b)`, 'i');
+        if (sameLineCloseRegex.test(lineText)) {
+            return false;
+        }
+    } catch (e) {
+        // If regex construction fails for some reason, fall back to a simple case-insensitive
+        // substring check as a safe default.
+        if (lineText.toUpperCase().indexOf(closingTag) !== -1) {
+            return false;
+        }
+    }
 
     for (let i = lineNumber + 1; i < maxLines; i++) {
         const nextLine = document.lineAt(i).text;
