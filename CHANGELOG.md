@@ -1,6 +1,10 @@
 # Change Log
 
 All notable changes to the "rpg-end-code-blocks" extension will be documented in this file.
+## [1.0.5]
+- Fixed issue with end block being on the same line.
+- Also make sure cursor is past the ; before adding a new line.
+
 ## [1.0.4]
 - Fixed a issue if it saw another If/EndIf block before the 20 lines it was not adding the end block.  Made a 
 change that should detect if a begin block happens prior to the 20 lines with the same block type if should add 
