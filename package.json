@@ -3,7 +3,7 @@
 	"displayName": "RPG End Code Blocks",
 	"description": "Auto add end code blocks on enter",
 	"icon": "images/begend.png",
-	"version": "1.0.6",
+	"version": "1.0.7",
 	"publisher": "RickyThompson",
 	"repository": "https://github.com/thomprl/rpg-end-code-blocks",
 	"engines": {
@@ -23,9 +23,42 @@
 				"command": "rpg-end-code-blocks.enter",
 				"key": "enter",
 				"title": "End Code Blocks",
-				"when": "editorTextFocus && editorLangId =~ /^rpgle$|^sqlrpgle$/ && vim.mode != 'Normal' && vim.mode != 'SearchInProgressMode' && vim.mode != 'CommandlineInProgress' "
+				"when": "editorTextFocus && (editorLangId == 'rpgle' || editorLangId == 'sqlrpgle') && vim.mode != 'Normal' && vim.mode != 'SearchInProgressMode' && vim.mode != 'CommandlineInProgress'"
 			}
-		]
+		],
+    "configuration":{
+      "title" : "RPG End Code Blocks",
+      "properties": {
+				"rpg-end-code-blocks.openings": {
+					"type": "array",
+					"description": "List of opening patterns and corresponding closing tokens. The `open` value is a RegExp string, `close` is the token to insert (without semicolon).",
+					"default": [
+							{ "open": "BEGSR\\b", "close": "EndSr" },
+							{ "open": "DCL-DS\\b", "close": "End-Ds" },
+							{ "open": "DCL-ENUM\\b", "close": "End-Enum" },
+							{ "open": "DCL-PR\\b", "close": "End-Pr" },
+							{ "open": "DCL-PI\\b", "close": "End-Pi" },
+							{ "open": "DCL-PROC\\b", "close": "End-Proc" },
+							{ "open": "DOW\\b", "close": "EndDo" },
+							{ "open": "DOU\\b", "close": "EndDo" },
+							{ "open": "FOR\\b", "close": "EndFor" },
+							{ "open": "FOR-EACH\\b", "close": "EndFor" },
+							{ "open": "IF\\b", "close": "EndIf" },
+							{ "open": "MONITOR\\s*;", "close": "EndMon" },
+							{ "open": "SELECT\\s*;", "close": "EndSl" }
+					],
+					"items": {
+						"type": "object",
+						"properties": {
+							"open": { "type": "string", "description": "RegExp (as a string) to match the opening statement (capitalized)" },
+							"close": { "type": "string", "description": "Token to insert as the closing statement (no trailing semicolon)" }
+						},
+						"required": ["open", "close"],
+						"additionalProperties": false
+					}
+				}
+      }
+    }
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",

@@ -4,19 +4,19 @@ import * as vscode from "vscode";
 // All openings are check for a space after before adding the cooresponding end except MONITOR and SELECT
 // Define a default value for OPENINGS_RPG
 const DEFAULT_OPENINGS_RPG = [
-    { "open": "^\\s*BEGSR\\b", "close": "EndSr" },
-    { "open": "^\\s*DCL-DS\\b", "close": "End-Ds" },
-    { "open": "^\\s*DCL-ENUM\\b", "close": "End-Enum" },        
-    { "open": "^\\s*DCL-PR\\b", "close": "End-Pr" },
-    { "open": "^\\s*DCL-PI\\b", "close": "End-Pi" },
-    { "open": "^\\s*DCL-PROC\\b", "close": "End-Proc" },
-    { "open": "^\\s*DOW\\b", "close": "EndDo" },
-    { "open": "^\\s*DOU\\b", "close": "EndDo" },
-    { "open": "^\\s*FOR\\b", "close": "EndFor" },
-    { "open": "^\\s*FOR-EACH\\b", "close": "EndFor" },
-    { "open": "^\\s*IF\\b", "close": "EndIf" },
-    { "open": "^\\s*MONITOR\\s*;", "close": "EndMon" },
-    { "open": "^\\s*SELECT\\s*;", "close": "EndSl" }
+    { "open": "BEGSR\\b", "close": "EndSr" },
+    { "open": "DCL-DS\\b", "close": "End-Ds" },
+    { "open": "DCL-ENUM\\b", "close": "End-Enum" },        
+    { "open": "DCL-PR\\b", "close": "End-Pr" },
+    { "open": "DCL-PI\\b", "close": "End-Pi" },
+    { "open": "DCL-PROC\\b", "close": "End-Proc" },
+    { "open": "DOW\\b", "close": "EndDo" },
+    { "open": "DOU\\b", "close": "EndDo" },
+    { "open": "FOR\\b", "close": "EndFor" },
+    { "open": "FOR-EACH\\b", "close": "EndFor" },
+    { "open": "IF\\b", "close": "EndIf" },
+    { "open": "MONITOR\\s*;", "close": "EndMon" },
+    { "open": "SELECT\\s*;", "close": "EndSl" }
 ];
 
 // Retrieve user-defined OPENINGS_RPG from settings or use the default value
@@ -40,6 +40,13 @@ const OPENINGS_RPG = OPENINGS_RPG_CONFIG.map(({ open, close }) => ({
 }));
 // Your activate function and other code can use OPENINGS_RPG as needed
 
+// Default tab size used when editor options don't provide a numeric value
+const DEFAULT_TAB_SIZE = 4;
+// Tolerance (in visual columns) when comparing opening/closing column positions.
+// Set to 0 to require exact column match; small non-equal columns should be treated
+// as different levels (so an EndIf shifted by one column won't block insertion).
+const MATCH_TOLERANCE = 0;
+
 const LINE_PARSE_LIMIT = 100000;
 
 async function rpgEndCodeBlocksEnter(calledWithModifier = false) {
@@ -49,7 +56,6 @@ async function rpgEndCodeBlocksEnter(calledWithModifier = false) {
     const lineNumber = editor.selection.active.line;
     const columnNumber = editor.selection.active.character;
     const lineText = editor.document.lineAt(lineNumber).text;
-    const lineLength = lineText.length;
 
     if (editor.document.languageId.toLowerCase() !== "rpgle") {
         await linebreak(); // Default behavior for non-RPG files
@@ -58,44 +64,101 @@ async function rpgEndCodeBlocksEnter(calledWithModifier = false) {
     
     let matchedOpening = OPENINGS_RPG.find(({ open }) => open.test(lineText));
     if (matchedOpening && shouldAddEnd(matchedOpening, editor, lineNumber, columnNumber)) {
-        await linebreakWithClosing(matchedOpening.close, lineText);
+        // Find the column position where the opening keyword starts
+        const openingKeywordCol = findOpeningKeywordColumn(lineText, matchedOpening.open);
+        await linebreakWithClosing(matchedOpening.close, lineText, openingKeywordCol);
     } else {
         await linebreak();
     }
 }
 
-async function linebreakWithClosing(closingTag, lineText) {
+async function linebreakWithClosing(closingTag, lineText, openingKeywordCol) {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {return;}
-
-    // Ensure the cursor is at the end of the current line so insertion happens
-    // in the intended location even if the cursor was elsewhere on the line.
+    // Insert the entire block in one edit and then set the selection to the blank content line.
     try {
         const currentLine = editor.selection.active.line;
-        const lineEnd = editor.document.lineAt(currentLine).range.end;
-        editor.selection = new vscode.Selection(lineEnd, lineEnd);
+        const insertPos = editor.document.lineAt(currentLine).range.end;
+
+            // Determine tab size and indentation style from editor options
+            const opts = editor.options;
+            const tabSizeRaw = opts && opts.tabSize;
+            const tabSize = typeof tabSizeRaw === 'number' ? Number(tabSizeRaw) : DEFAULT_TAB_SIZE;
+            const insertSpaces = !!opts && !!opts.insertSpaces;
+
+        // Compute visual columns for the opening keyword so we can align the closing tag
+        const openingVisCol = getVisualColumn(lineText, openingKeywordCol, tabSize);
+
+        // Content line should be indented one tab stop past the opening keyword visual column
+        const contentVisCol = openingVisCol + tabSize;
+
+        // Build indent strings that exactly reach the required visual columns.
+        const contentIndent = buildIndentFromVisual(contentVisCol, tabSize, insertSpaces);
+        // Force the closing indent to use spaces so the closing tag lines up exactly
+        // with the opening keyword visual column even when it's not on a tab stop.
+        const closingIndent = buildIndentFromVisual(openingVisCol, tabSize, true);
+
+        const insertText = `\n${contentIndent}\n${closingIndent}${closingTag};`;
+
+        await editor.edit((eb) => eb.insert(insertPos, insertText));
+
+        // Place the selection on the blank content line after the inserted indent
+        const blankLine = currentLine + 1;
+        const newPos = new vscode.Position(blankLine, contentIndent.length);
+        editor.selection = new vscode.Selection(newPos, newPos);
     } catch (e) {
-        // If anything goes wrong, fall back to default behavior (do nothing).
+        // Fallback: simple line break behavior
+        await vscode.commands.executeCommand('lineBreakInsert');
     }
-
-    await editor.edit((textEditor) => {
-        const indent = indentationFor(lineText);
-        textEditor.insert(
-            new vscode.Position(editor.selection.active.line, Number.MAX_VALUE),
-            `\n${indent}${closingTag}\;`
-        );
-    });
-
-    await vscode.commands.executeCommand("cursorUp"); 
-    await vscode.commands.executeCommand("editor.action.insertLineAfter");
-    // Indent the line
-    await vscode.commands.executeCommand("editor.action.indentLines");
 }
 
 async function linebreak() {
     await vscode.commands.executeCommand("lineBreakInsert");
 	await vscode.commands.executeCommand("cursorDown");
 	//await vscode.commands.executeCommand("cursorLineStart");
+}
+
+function findOpeningKeywordColumn(lineText: string, openingPattern: RegExp): number {
+    // Reset lastIndex in case a RegExp with the global flag is ever used.
+    try {
+        openingPattern.lastIndex = 0;
+    } catch (e) {
+        // ignore if not writable
+    }
+
+    // Use RegExp.exec to get the match index (start position of the keyword)
+    const m = openingPattern.exec(lineText);
+    if (!m) { return -1; }
+    return typeof m.index === 'number' ? m.index : lineText.indexOf(m[0]);
+}
+
+// (removed) use regex exec positions directly for robust column detection
+
+function getVisualColumn(lineText: string, index: number, tabSize: number) {
+    // Compute visual column (taking tabs into account) for character index
+    let col = 0;
+    for (let i = 0; i < Math.min(index, lineText.length); i++) {
+        const ch = lineText[i];
+        if (ch === '\t') {
+            const advance = tabSize - (col % tabSize || 0);
+            col += advance;
+        } else {
+            col += 1;
+        }
+    }
+    return col;
+}
+
+function buildIndentFromVisual(visualCols: number, tabSize: number, insertSpaces: boolean): string {
+    // Construct a string of tabs and spaces (or spaces only) that occupies exactly
+    // `visualCols` visual columns when rendered in the editor with the given tab size.
+    if (visualCols <= 0) { return ''; }
+    if (insertSpaces) {
+        return ' '.repeat(visualCols);
+    }
+    const tabs = Math.floor(visualCols / tabSize);
+    const spaces = visualCols - (tabs * tabSize);
+    return '\t'.repeat(tabs) + ' '.repeat(spaces);
 }
 
 function shouldAddEnd(matchedOpening, editor, lineNumber, columnNumber) {
@@ -117,14 +180,26 @@ function shouldAddEnd(matchedOpening, editor, lineNumber, columnNumber) {
 
     const closingTag = matchedOpening.close.toUpperCase();
     const openingPattern = matchedOpening.open;
-    const currentIndent = lineText.match(/^(\s*)/)?.[1] ?? '';
+    const escapedClose = matchedOpening.close.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    
+    // Find where the opening keyword starts in this line (raw char index)
+    const openingKeywordCol = findOpeningKeywordColumn(lineText, openingPattern);
+    if (openingKeywordCol < 0) {
+        return false;
+    }
+
+    // Determine tab size from editor options (fallback to DEFAULT_TAB_SIZE)
+    const opts = editor.options;
+    const tabSizeRaw = opts && opts.tabSize;
+    const tabSize = typeof tabSizeRaw === 'number' ? Number(tabSizeRaw) : DEFAULT_TAB_SIZE;
+
+    const openingVisCol = getVisualColumn(lineText, openingKeywordCol, tabSize);
 
     const maxLines = Math.min(document.lineCount, lineNumber + 20);
 
     // New check: if the same line already contains the corresponding closing tag,
     // do not add an end block. This handles cases like "IF ... EndIf;" on one line.
     try {
-        const escapedClose = matchedOpening.close.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const sameLineCloseRegex = new RegExp(`${escapedClose}(\\s*;|\\b)`, 'i');
         if (sameLineCloseRegex.test(lineText)) {
             return false;
@@ -137,39 +212,36 @@ function shouldAddEnd(matchedOpening, editor, lineNumber, columnNumber) {
         }
     }
 
+    // Check following lines to see if there's already a closing tag at the same column
     for (let i = lineNumber + 1; i < maxLines; i++) {
         const nextLine = document.lineAt(i).text;
-        
-        const nextIndent = nextLine.match(/^(\s*)/)?.[1] ?? '';
         const trimmedUpper = nextLine.trim().toUpperCase();
 
-        // Case 1: Found closing tag at same indent – cancel
-        if ((trimmedUpper === `${closingTag};` || trimmedUpper.startsWith(`${closingTag} `)) &&
-            nextIndent === currentIndent) {
-            return false;
+        // Case 1: Found closing tag at the same column position – cancel
+        if ((trimmedUpper === `${closingTag};` || trimmedUpper.startsWith(`${closingTag} `))) {
+            // Check if this closing tag is at the same visual column as the opening keyword
+            const closingKeywordMatch = nextLine.match(new RegExp(`\\b${escapedClose}\\b`, 'i'));
+            if (closingKeywordMatch) {
+                const closingKeywordCol = nextLine.indexOf(closingKeywordMatch[0]);
+                const closingVisCol = getVisualColumn(nextLine, closingKeywordCol, tabSize);
+                if (Math.abs(closingVisCol - openingVisCol) <= MATCH_TOLERANCE) {
+                    return false;
+                }
+            }
         }
 
-        // Case 2: Found same opening tag at same indent – allow insertion
-        if (openingPattern.test(nextLine) && nextIndent === currentIndent) {
-            break; // Allow adding, since a new opening started
+        // Case 2: Found same opening tag at the same column – allow insertion
+        // Reset openingPattern.lastIndex before using it (safety for global regexes)
+        try { openingPattern.lastIndex = 0; } catch (e) { /* ignore */ }
+        const nextOpeningMatch = nextLine.match(openingPattern);
+        if (nextOpeningMatch) {
+            const nextOpeningCol = nextLine.indexOf(nextOpeningMatch[0]);
+            const nextOpeningVis = getVisualColumn(nextLine, nextOpeningCol, tabSize);
+            if (Math.abs(nextOpeningVis - openingVisCol) <= MATCH_TOLERANCE) {
+                break; // Allow adding, since a new opening started at same level
+            }
         }
     }
 
     return true;
-}
-
-function indentationFor(lineText) {
-    const match = lineText.match(/^(\s*)/);
-    return match ? match[1] : '';
-}
-
-function hasClosingTag(editor, fromLine, expectedClose) {
-    const totalLines = editor.document.lineCount;
-    for (let i = fromLine + 1; i < Math.min(fromLine + 100, totalLines); i++) {
-        const text = editor.document.lineAt(i).text;
-        if (text.trim().toUpperCase().startsWith(expectedClose.toUpperCase())) {
-            return true;
-        }
-    }
-    return false;
 }

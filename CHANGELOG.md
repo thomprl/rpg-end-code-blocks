@@ -1,6 +1,31 @@
 # Change Log
 
 All notable changes to the "rpg-end-code-blocks" extension will be documented in this file.
+## [1.0.7]
+- Registered the extension settings so that it will default the settings in settings.json in VSCode.
+- Fixed various issues when the begin block was not be detected correctly if there was a comment 
+at the beginning of the line (ie columns 1-5) before the opening block statement. 
+If you have previously customized the settings.json file you will need to make the 
+following changes to your json file.
+
+```
+    "rpg-end-code-blocks.openings": [
+      { "open": "BEGSR\\b", "close": "EndSr" },
+      { "open": "DCL-DS\\b", "close": "End-Ds" },
+      { "open": "DCL-ENUM\\b", "close": "End-Enum" },        
+      { "open": "DCL-PR\\b", "close": "End-Pr" },
+      { "open": "DCL-PI\\b", "close": "End-Pi" },
+      { "open": "DCL-PROC\\b", "close": "End-Proc" },
+      { "open": "DOW\\b", "close": "EndDo" },
+      { "open": "DOU\\b", "close": "EndDo" },
+      { "open": "FOR\\b", "close": "EndFor" },
+      { "open": "FOR-EACH\\b", "close": "EndFor" },
+      { "open": "IF\\b", "close": "EndIf" },
+      { "open": "MONITOR\\s*;", "close": "EndMon" },
+      { "open": "SELECT\\s*;", "close": "EndSl" }
+    ]
+```
+
 ## [1.0.6]
 - Forgot to update the CHANGELOG.MD file.  Bumping to version 1.0.6.
 
@@ -23,5 +48,5 @@ a new end block. Again this isn't perfect and relies on the code to be formmatte
 ## [1.0.1]
 - Improved the logic for deciding if a end block is needed. 
 
-## [1.0.0]
-- Initial release
+### 1.0.0
+Initial release
