@@ -14,7 +14,7 @@ const DEFAULT_OPENINGS_RPG = [
     { "open": "DOU\\b", "close": "EndDo" },
     { "open": "FOR\\b", "close": "EndFor" },
     { "open": "FOR-EACH\\b", "close": "EndFor" },
-    { "open": "IF\\b", "close": "EndIf" },
+    { "open": "(?<!ELSE)IF\\b", "close": "EndIf" },
     { "open": "MONITOR\\s*;", "close": "EndMon" },
     { "open": "SELECT\\s*;", "close": "EndSl" }
 ];

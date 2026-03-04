@@ -3,7 +3,7 @@
 	"displayName": "RPG End Code Blocks",
 	"description": "Auto add end code blocks on enter",
 	"icon": "images/begend.png",
-	"version": "1.0.7",
+	"version": "1.0.8",
 	"publisher": "RickyThompson",
 	"repository": "https://github.com/thomprl/rpg-end-code-blocks",
 	"engines": {
@@ -43,7 +43,7 @@
 							{ "open": "DOU\\b", "close": "EndDo" },
 							{ "open": "FOR\\b", "close": "EndFor" },
 							{ "open": "FOR-EACH\\b", "close": "EndFor" },
-							{ "open": "IF\\b", "close": "EndIf" },
+							{ "open": "(?<!ELSE)IF\\b", "close": "EndIf" },
 							{ "open": "MONITOR\\s*;", "close": "EndMon" },
 							{ "open": "SELECT\\s*;", "close": "EndSl" }
 					],
@@ -66,17 +66,15 @@
 		"watch": "tsc -watch -p ./",
 		"pretest": "npm run compile && npm run lint",
 		"lint": "eslint src --ext ts",
-		"test": "vscode-test"
+		"test": "node ./out/test/runTest.js"
 	},
 	"devDependencies": {
 		"@types/vscode": "^1.87.0",
-		"@types/mocha": "^10.0.6",
 		"@types/node": "18.x",
 		"@typescript-eslint/eslint-plugin": "^7.0.2",
 		"@typescript-eslint/parser": "^7.0.2",
 		"eslint": "^8.56.0",
 		"typescript": "^5.3.3",
-		"@vscode/test-cli": "^0.0.6",
 		"@vscode/test-electron": "^2.3.9"
 	},
 	"__metadata": {
