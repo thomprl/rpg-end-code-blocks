@@ -11,19 +11,19 @@ These are default code blocks settings but if you wish to customize them (Change
 
 ```
     "rpg-end-code-blocks.openings": [
-      { "open": "BEGSR\\b", "close": "EndSr" },
-      { "open": "DCL-DS\\b", "close": "End-Ds" },
-      { "open": "DCL-ENUM\\b", "close": "End-Enum" },        
-      { "open": "DCL-PR\\b", "close": "End-Pr" },
-      { "open": "DCL-PI\\b", "close": "End-Pi" },
-      { "open": "DCL-PROC\\b", "close": "End-Proc" },
-      { "open": "DOW\\b", "close": "EndDo" },
-      { "open": "DOU\\b", "close": "EndDo" },
-      { "open": "FOR\\b", "close": "EndFor" },
-      { "open": "FOR-EACH\\b", "close": "EndFor" },
-      { "open": "IF\\b", "close": "EndIf" },
-      { "open": "MONITOR\\s*;", "close": "EndMon" },
-      { "open": "SELECT\\s*;", "close": "EndSl" }
+      {"open": "BEGSR\\b", "close": "EndSr" },
+      {"open": "DCL-DS\\b", "close": "End-Ds" },
+      {"open": "DCL-ENUM\\b", "close": "End-Enum" },
+      {"open": "DCL-PR\\b", "close": "End-Pr" },
+      {"open": "DCL-PI\\b", "close": "End-Pi" },
+      {"open": "DCL-PROC\\b", "close": "End-Proc" },
+      {"open": "DOW\\b", "close": "EndDo" },
+      {"open": "DOU\\b", "close": "EndDo" },
+      {"open": "FOR\\b", "close": "EndFor" },
+      {"open": "FOR-EACH\\b", "close": "EndFor" },
+      {"open": "(?<!ELSE)IF\\b", "close": "EndIf" },
+      {"open": "MONITOR\\s*;", "close": "EndMon" },
+      {"open": "SELECT\\s*;", "close": "EndSl" }
     ]
 ```
 
