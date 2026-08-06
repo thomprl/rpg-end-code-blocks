@@ -22,7 +22,7 @@ These are default code blocks settings but if you wish to customize them (Change
       {"open": "FOR\\b", "close": "EndFor" },
       {"open": "FOR-EACH\\b", "close": "EndFor" },
       {"open": "(?<!ELSE)IF\\b", "close": "EndIf" },
-      {"open": "MONITOR\\s*;", "close": "EndMon" },
+      {"open": "MONITOR\\s*;", "close": "On-Error;\nEndMon" },
       {"open": "SELECT\\s*;", "close": "EndSl" }
     ]
 ```
