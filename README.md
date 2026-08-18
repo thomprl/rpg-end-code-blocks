@@ -22,10 +22,12 @@ These are default code blocks settings but if you wish to customize them (Change
       {"open": "FOR\\b", "close": "EndFor" },
       {"open": "FOR-EACH\\b", "close": "EndFor" },
       {"open": "(?<!ELSE)IF\\b", "close": "EndIf" },
-      {"open": "MONITOR\\s*;", "close": "On-Error;\nEndMon" },
+      {"open": "MONITOR\\s*;", "middle": "On-Error", "close": "EndMon" },
       {"open": "SELECT\\s*;", "close": "EndSl" }
     ]
 ```
+
+`middle` is optional and inserts an extra line, aligned with `close`, between the content line and the closing line — used above so a `MONITOR` block always gets its required `On-Error` line before `EndMon`.
 
 ## Requirements
 This will only work with ILE RPGLE Free Format code.   

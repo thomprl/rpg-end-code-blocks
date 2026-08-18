@@ -15,30 +15,9 @@ const DEFAULT_OPENINGS_RPG = [
     { "open": "FOR\\b", "close": "EndFor" },
     { "open": "FOR-EACH\\b", "close": "EndFor" },
     { "open": "(?<!ELSE)IF\\b", "close": "EndIf" },
-    { "open": "MONITOR\\s*;", "close": "EndMon" },
+    { "open": "MONITOR\\s*;", "middle": "On-Error", "close": "EndMon" },
     { "open": "SELECT\\s*;", "close": "EndSl" }
 ];
-
-// Retrieve user-defined OPENINGS_RPG from settings or use the default value
-export async function activate(context: vscode.ExtensionContext) {
-	console.log("Activate rpg-end-code-blocks");
- 	const enter = vscode.commands.registerCommand("rpg-end-code-blocks.enter", async () => {
-        await rpgEndCodeBlocksEnter();
-    });
-
-    context.subscriptions.push(enter);
-}
-
-
-// Retrieve user-defined OPENINGS_RPG from settings or use the default value
-const OPENINGS_RPG_CONFIG = vscode.workspace.getConfiguration().get("rpg-end-code-blocks.openings", DEFAULT_OPENINGS_RPG);
-
-// Convert string representations of regular expressions to RegExp objects
-const OPENINGS_RPG = OPENINGS_RPG_CONFIG.map(({ open, close }) => ({
-    open: new RegExp(open, "i"),
-    close
-}));
-// Your activate function and other code can use OPENINGS_RPG as needed
 
 // Default tab size used when editor options don't provide a numeric value
 const DEFAULT_TAB_SIZE = 4;
@@ -48,6 +27,107 @@ const DEFAULT_TAB_SIZE = 4;
 const MATCH_TOLERANCE = 0;
 
 const LINE_PARSE_LIMIT = 100000;
+
+// Default number of lines to scan ahead of an opening statement for an existing closing tag
+const DEFAULT_LOOK_AHEAD_LINES = 20;
+
+// Cached, user-configurable values. Populated on activation and kept in sync via
+// onDidChangeConfiguration so hot-path code never has to read settings itself.
+let OPENINGS_RPG = loadOpenings();
+let LOOK_AHEAD_LINES = loadLookAheadLines();
+
+function loadOpenings() {
+    const config = vscode.workspace.getConfiguration().get("rpg-end-code-blocks.openings", DEFAULT_OPENINGS_RPG);
+    // Convert string representations of regular expressions to RegExp objects
+    return config.map(({ open, close, middle }) => ({
+        open: new RegExp(open, "i"),
+        close,
+        middle
+    }));
+}
+
+function loadLookAheadLines() {
+    return vscode.workspace.getConfiguration().get("rpg-end-code-blocks.lookAheadLines", DEFAULT_LOOK_AHEAD_LINES);
+}
+
+const LAST_SEEN_VERSION_KEY = "rpg-end-code-blocks.lastSeenVersion";
+
+export async function activate(context: vscode.ExtensionContext) {
+	console.log("Activate rpg-end-code-blocks");
+ 	const enter = vscode.commands.registerCommand("rpg-end-code-blocks.enter", async () => {
+        await rpgEndCodeBlocksEnter();
+    });
+
+    context.subscriptions.push(enter);
+
+    context.subscriptions.push(vscode.workspace.onDidChangeConfiguration((event) => {
+        if (event.affectsConfiguration("rpg-end-code-blocks.openings")) {
+            try {
+                OPENINGS_RPG = loadOpenings();
+            } catch (e) {
+                // Keep the previous, known-good openings if the new value has an invalid RegExp
+                console.error("rpg-end-code-blocks: failed to reload 'openings' setting, keeping previous value", e);
+            }
+        }
+        if (event.affectsConfiguration("rpg-end-code-blocks.lookAheadLines")) {
+            LOOK_AHEAD_LINES = loadLookAheadLines();
+        }
+    }));
+
+    await checkOpeningsDefaultsOnUpdate(context);
+}
+
+// Normalize an openings array for comparison: lowercase the open/close strings so
+// differences in case alone don't register as a "real" difference.
+function normalizeOpeningsForCompare(list) {
+    return (list || []).map(({ open, close }) => ({
+        open: String(open).toLowerCase(),
+        close: String(close).toLowerCase()
+    }));
+}
+
+function openingsEqual(a, b) {
+    return JSON.stringify(normalizeOpeningsForCompare(a)) === JSON.stringify(normalizeOpeningsForCompare(b));
+}
+
+// When the extension updates to a new version, check whether the user has an explicit
+// 'openings' override saved in settings.json that no longer matches the extension's
+// current defaults, and offer to overwrite it with the new defaults.
+async function checkOpeningsDefaultsOnUpdate(context: vscode.ExtensionContext) {
+    const currentVersion = context.extension.packageJSON.version;
+    const previousVersion = context.globalState.get(LAST_SEEN_VERSION_KEY);
+
+    if (previousVersion === currentVersion) {
+        return;
+    }
+    await context.globalState.update(LAST_SEEN_VERSION_KEY, currentVersion);
+
+    const inspected = vscode.workspace.getConfiguration().inspect("rpg-end-code-blocks.openings");
+    if (!inspected) {
+        return;
+    }
+
+    // Prefer a workspace-level override over a global (user settings.json) one, since
+    // workspace settings take precedence for this workspace.
+    const override = inspected.workspaceValue !== undefined
+        ? { value: inspected.workspaceValue, target: vscode.ConfigurationTarget.Workspace }
+        : inspected.globalValue !== undefined
+            ? { value: inspected.globalValue, target: vscode.ConfigurationTarget.Global }
+            : undefined;
+
+    if (!override || openingsEqual(override.value, DEFAULT_OPENINGS_RPG)) {
+        return; // No override, or it already matches the current defaults.
+    }
+
+    const choice = await vscode.window.showInformationMessage(
+        `RPG End Code Blocks was updated to v${currentVersion} and its default 'openings' patterns have changed since your settings.json was last saved. Overwrite your settings.json with the new defaults?`,
+        "Overwrite", "Keep Mine"
+    );
+
+    if (choice === "Overwrite") {
+        await vscode.workspace.getConfiguration().update("rpg-end-code-blocks.openings", DEFAULT_OPENINGS_RPG, override.target);
+    }
+}
 
 async function rpgEndCodeBlocksEnter(calledWithModifier = false) {
     const editor = vscode.window.activeTextEditor;
@@ -66,13 +146,13 @@ async function rpgEndCodeBlocksEnter(calledWithModifier = false) {
     if (matchedOpening && shouldAddEnd(matchedOpening, editor, lineNumber, columnNumber)) {
         // Find the column position where the opening keyword starts
         const openingKeywordCol = findOpeningKeywordColumn(lineText, matchedOpening.open);
-        await linebreakWithClosing(matchedOpening.close, lineText, openingKeywordCol);
+        await linebreakWithClosing(matchedOpening.close, lineText, openingKeywordCol, matchedOpening.middle);
     } else {
         await linebreak();
     }
 }
 
-async function linebreakWithClosing(closingTag, lineText, openingKeywordCol) {
+async function linebreakWithClosing(closingTag, lineText, openingKeywordCol, middleTag) {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {return;}
     // Insert the entire block in one edit and then set the selection to the blank content line.
@@ -98,7 +178,8 @@ async function linebreakWithClosing(closingTag, lineText, openingKeywordCol) {
         // with the opening keyword visual column even when it's not on a tab stop.
         const closingIndent = buildIndentFromVisual(openingVisCol, tabSize, true);
 
-        const insertText = `\n${contentIndent}\n${closingIndent}${closingTag};`;
+        const middleLine = middleTag ? `${closingIndent}${middleTag};\n` : '';
+        const insertText = `\n${contentIndent}\n${middleLine}${closingIndent}${closingTag};`;
 
         await editor.edit((eb) => eb.insert(insertPos, insertText));
 
@@ -195,7 +276,7 @@ function shouldAddEnd(matchedOpening, editor, lineNumber, columnNumber) {
 
     const openingVisCol = getVisualColumn(lineText, openingKeywordCol, tabSize);
 
-    const maxLines = Math.min(document.lineCount, lineNumber + 20);
+    const maxLines = Math.min(document.lineCount, lineNumber + LOOK_AHEAD_LINES);
 
     // New check: if the same line already contains the corresponding closing tag,
     // do not add an end block. This handles cases like "IF ... EndIf;" on one line.

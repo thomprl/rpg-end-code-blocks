@@ -3,7 +3,7 @@
 	"displayName": "RPG End Code Blocks",
 	"description": "Auto add end code blocks on enter",
 	"icon": "images/begend.png",
-	"version": "1.0.8",
+	"version": "1.0.9",
 	"publisher": "RickyThompson",
 	"repository": "https://github.com/thomprl/rpg-end-code-blocks",
 	"engines": {
@@ -44,18 +44,25 @@
 							{ "open": "FOR\\b", "close": "EndFor" },
 							{ "open": "FOR-EACH\\b", "close": "EndFor" },
 							{ "open": "(?<!ELSE)IF\\b", "close": "EndIf" },
-							{ "open": "MONITOR\\s*;", "close": "EndMon" },
+							{ "open": "MONITOR\\s*;", "middle": "On-Error", "close": "EndMon" },
 							{ "open": "SELECT\\s*;", "close": "EndSl" }
 					],
 					"items": {
 						"type": "object",
 						"properties": {
 							"open": { "type": "string", "description": "RegExp (as a string) to match the opening statement (capitalized)" },
+							"middle": { "type": "string", "description": "Optional line to insert between the content line and the closing line (no trailing semicolon). Useful for constructs that always require a fixed line before the close, e.g. MONITOR On-Error before EndMon." },
 							"close": { "type": "string", "description": "Token to insert as the closing statement (no trailing semicolon)" }
 						},
 						"required": ["open", "close"],
 						"additionalProperties": false
 					}
+				},
+				"rpg-end-code-blocks.lookAheadLines": {
+					"type": "number",
+					"description": "Number of lines to scan ahead of an opening statement when checking whether a closing tag already exists.",
+					"default": 20,
+					"minimum": 1
 				}
       }
     }
